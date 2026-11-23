@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VR-туры домов</title>
+<title>VR-туры домов · АПЕЛЬ СТРОЙ</title>
 <style>
 :root{--bg:#f6efe4;--card:#fffaf2;--fg:#2c2620;--mute:#7a6d60;--line:#e4d6c2;--acc:#b5643c;--acc2:#c88d55}
 @media (prefers-color-scheme: dark){:root{--bg:#1f1b17;--card:#2a241f;--fg:#f2e9dc;--mute:#b3a492;--line:#3d342c;--acc:#e08a5c;--acc2:#d9a66f}}
@@ -11,6 +11,7 @@
 body{margin:0;background:var(--bg);color:var(--fg);font:18px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:32px max(16px,env(safe-area-inset-left)) 48px}
 .wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
 h1{font-size:clamp(28px,5vw,44px);margin:0;letter-spacing:-.01em}
+.brand{margin:6px 0 0;font-size:16px;letter-spacing:.08em;color:var(--acc)}
 .sub{color:var(--mute);margin:4px 0 0}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
 a.house{display:flex;flex-direction:column;gap:10px;padding:28px;border-radius:20px;background:var(--card);border:2px solid var(--line);color:inherit;text-decoration:none;min-height:190px;transition:border-color .15s,transform .15s}
@@ -34,14 +35,15 @@ li{margin:4px 0}
 <div class="wrap">
   <header>
     <h1>VR-туры домов</h1>
+    <p class="brand">АПЕЛЬ СТРОЙ · <b>апель.рф</b></p>
     <p class="sub">Выберите дом. В очках после загрузки нажмите «Прогулка», затем «Войти в VR».</p>
   </header>
 
   <div class="grid">
-    <a class="house" href="dom-71/">
-      <span class="name">Дом 71 м²</span>
-      <span class="meta">СИП, 11,5 × 7 м · 3 спальни · крыльцо</span>
-      <span><span class="tag">Отделка: Мёд и лён</span></span>
+    <a class="house" href="od-80-03/">
+      <span class="name">Проект ОД-80.03</span>
+      <span class="meta">71 м² · СИП, 11,5 × 7 м · 3 спальни · крыльцо</span>
+      <span><span class="tag">Отделка: Светлая скандинавская</span> <span class="tag">Фасад: фибросайдинг</span></span>
       <span class="go">Открыть тур →</span>
     </a>
     <a class="house" href="dom-108/">
@@ -56,7 +58,7 @@ li{margin:4px 0}
     <h2>Список туров</h2>
     <div class="tw"><table>
       <tr><th>Дом</th><th>Адрес на сайте</th><th>Отделка</th><th>Обновлён</th></tr>
-      <tr><td>Дом 71 м² (СИП)</td><td><code>/dom-71/</code></td><td>Мёд и лён</td><td>22.11.2026</td></tr>
+      <tr><td>Проект ОД-80.03, 71 м² (СИП)</td><td><code>/od-80-03/</code></td><td>Светлая скандинавская, фасад фибросайдинг</td><td>23.11.2026</td></tr>
       <tr><td>Дом 108 м² (с террасой)</td><td><code>/dom-108/</code></td><td>Светлая скандинавская</td><td>20.11.2026</td></tr>
     </table></div>
   </section>
