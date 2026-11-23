@@ -127,7 +127,7 @@ if(ENV && ENV.sky){
     fragmentShader:'uniform sampler2D sky; varying vec3 vW; '+EQ+'void main(){ gl_FragColor = vec4(texture2D(sky, equv(normalize(vW - cameraPosition))).rgb, 1.0); }'})));
   var GF = 'uniform sampler2D sky; uniform sampler2D lawn; uniform vec3 K; uniform vec3 C; varying vec3 vW; '+EQ+
     'vec3 lawnc(){ return texture2D(lawn, vW.xz/1.6).rgb*K; }'+
-    'vec3 groundc(){ vec3 pc = texture2D(sky, equv(normalize(vW - C))).rgb; float r = length(vW.xz - C.xz); float hv = 1.0 - smoothstep(C.y + 1.0, C.y + 4.0, cameraPosition.y); return mix(lawnc(), pc, smoothstep(22.0, 38.0, r)*hv); }';
+    'vec3 groundc(){ vec3 pc = texture2D(sky, equv(normalize(vW - C))).rgb; float r = length(vW.xz - C.xz); float hv = 1.0 - smoothstep(C.y + 1.0, C.y + 4.0, cameraPosition.y); return mix(lawnc(), pc, 0.0*smoothstep(22.0, 38.0, r)*hv); }';
   far = new THREE.Mesh(new THREE.PlaneGeometry(900,900), new THREE.ShaderMaterial({uniforms:{sky:{value:skyT}, lawn:{value:lawnT}, K:{value:K}, C:{value:CP}},
     vertexShader:VS, fragmentShader:GF+'void main(){ gl_FragColor = vec4(groundc(), 1.0); }'}));
   far.rotation.x = -Math.PI/2; far.position.set(5.75,GY-0.004,4.5); scene.add(far);
@@ -135,7 +135,7 @@ if(ENV && ENV.sky){
     return new THREE.ShaderMaterial({uniforms:{sky:{value:skyT}, lawn:{value:lawnT}, K:{value:K}, C:{value:CP}, baked:{value:bt}, EL:{value:el}}, vertexShader:VS,
       fragmentShader:GF+'uniform sampler2D baked; uniform float EL; varying vec2 vUv; void main(){ vec3 b = texture2D(baked, vUv).rgb; float sh = clamp(dot(b, vec3(0.2126,0.7152,0.0722))/EL, 0.0, 1.15); gl_FragColor = vec4(groundc()*sh, 1.0); }'}); };
   var hT = etex(ENV.hedge, false, true), hm = new THREE.MeshBasicMaterial({map:hT, alphaTest:0.5, side:THREE.DoubleSide}); hT.encoding = THREE.sRGBEncoding;
-  var HW = ENV.hedgeWH[0]*1.5, HH = ENV.hedgeWH[1]*1.5, hg = new THREE.PlaneGeometry(HW, HH);
+  var HW = ENV.hedgeWH[0]*2.0, HH = ENV.hedgeWH[1]*2.0, hg = new THREE.PlaneGeometry(HW, HH);
   var hedge = function(xa, za, xb, zb){ var L = Math.hypot(xb-xa, zb-za), n = Math.ceil(L/(HW*0.8)), ang = Math.atan2(-(zb-za), xb-xa);
     for(var i=0;i<n;i++){ var t = (i+0.5)/n; for(var o=-1;o<=1;o+=2){ var m = new THREE.Mesh(hg, hm), nx = -(zb-za)/L, nz = (xb-xa)/L;
       m.position.set(xa+(xb-xa)*t + nx*o*0.25, GY + HH/2 - 0.05, za+(zb-za)*t + nz*o*0.25); m.rotation.y = ang; if(o>0) m.scale.x = -1; scene.add(m); } } };
