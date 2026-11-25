@@ -2,7 +2,7 @@
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
 </head><body>
-<title>VR-тур дома 108 м²</title>
+<title>Дом 108 м² с террасой · АПЕЛЬ СТРОЙ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: the 3D view fills the screen; a title plate, a plan-style minimap and one control bar float over it like stamps on a drawing sheet. */
@@ -62,8 +62,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 <canvas id="view" aria-label="3D-модель дома"></canvas>
 
 <div class="plate">
-  <h1>VR-тур дома</h1>
-  <p class="dims">11,0 × 8,5 м · 108,09 м² · h 2,8 м</p>
+  <h1>Дом 108 м² с террасой · АПЕЛЬ СТРОЙ</h1>
+  <p class="dims">11,0 × 8,5 м + терраса 21 м² · 108 м² · h 2,8 м</p>
   <p class="room" id="room">Вид снаружи</p>
 </div>
 
@@ -84,13 +84,16 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <button id="vr" disabled>VR: проверка…</button>
 </div>
 
-<script src="model1.js"></script>
-<script src="model2.js"></script>
-<script src="three.js"></script>
+<script src="model1.js?v=2"></script>
+<script src="model2.js?v=2"></script>
+<script src="three.js?v=2"></script>
+<script src="env1.js?v=2"></script>
+<script src="env2.js?v=2"></script>
+
 <script>
 (function(){
 'use strict';
-var M = 1/1000, H = 2800, EYE = 1.6, R = 0.22, GY = -0.55;
+var M = 1/1000, H = 2500, EYE = 1.6, R = 0.22, GY = -0.55;
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('view');
 function fail(t){ var f = $('fail'); f.textContent = t; f.hidden = false; }
@@ -111,12 +114,45 @@ var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(65, 1, 0.05, 900);
 var rig = new THREE.Group(); rig.add(camera); scene.add(rig);
 var EDGE = 'rgb('+MD.edge.join(',')+')';
+var ENV = window.ENVD, far, EQ = 'vec2 equv(vec3 d){ vec3 b = vec3(d.x, -d.z, d.y); return vec2(-atan(b.y, b.x)/6.2831853 + 0.5, atan(b.z, length(b.xy))/3.1415927 + 0.5); }\n';
+var VS = 'varying vec3 vW; varying vec2 vUv; void main(){ vUv = uv; vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }';
+function etex(src, rep, mip){ var t = new THREE.Texture(), im = new Image(); t.anisotropy = ANISO;
+  if(rep){ t.wrapS = t.wrapT = THREE.RepeatWrapping; }
+  if(!mip){ t.generateMipmaps = false; t.minFilter = THREE.LinearFilter; }
+  im.onload = function(){ t.image = im; t.needsUpdate = true; }; im.src = src; return t; }
+var CP = new THREE.Vector3(6.75, GY + 1.7, 7.5);
+if(ENV && ENV.sky){
+  var skyT = etex(ENV.sky, false, false), lawnT = etex(ENV.lawn, true, true), K = new THREE.Vector3().fromArray(ENV.lawnk);
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(400,48,24), new THREE.ShaderMaterial({side:THREE.BackSide, depthWrite:false,
+    uniforms:{sky:{value:skyT}}, vertexShader:VS,
+    fragmentShader:'uniform sampler2D sky; varying vec3 vW; '+EQ+'void main(){ gl_FragColor = vec4(texture2D(sky, equv(normalize(vW - cameraPosition))).rgb, 1.0); }'})));
+  var GF = 'uniform sampler2D sky; uniform sampler2D lawn; uniform vec3 K; uniform vec3 C; varying vec3 vW; '+EQ+
+    'vec3 lawnc(){ return texture2D(lawn, vW.xz/1.6).rgb*K; }'+
+    'vec3 groundc(){ vec3 pc = texture2D(sky, equv(normalize(vW - C))).rgb; float r = length(vW.xz - C.xz); float hv = 1.0 - smoothstep(C.y + 1.0, C.y + 4.0, cameraPosition.y); return mix(lawnc(), pc, 0.0*smoothstep(22.0, 38.0, r)*hv); }';
+  far = new THREE.Mesh(new THREE.PlaneGeometry(900,900), new THREE.ShaderMaterial({uniforms:{sky:{value:skyT}, lawn:{value:lawnT}, K:{value:K}, C:{value:CP}},
+    vertexShader:VS, fragmentShader:GF+'void main(){ gl_FragColor = vec4(groundc(), 1.0); }'}));
+  far.rotation.x = -Math.PI/2; far.position.set(6.75,GY-0.004,5); scene.add(far);
+  window.__groundMat = function(bt){ var e = MD.edge, el = (0.2126*e[0]+0.7152*e[1]+0.0722*e[2])/255;
+    return new THREE.ShaderMaterial({uniforms:{sky:{value:skyT}, lawn:{value:lawnT}, K:{value:K}, C:{value:CP}, baked:{value:bt}, EL:{value:el}}, vertexShader:VS,
+      fragmentShader:GF+'uniform sampler2D baked; uniform float EL; varying vec2 vUv; void main(){ vec3 b = texture2D(baked, vUv).rgb; float sh = clamp(dot(b, vec3(0.2126,0.7152,0.0722))/EL, 0.0, 1.15); gl_FragColor = vec4(groundc()*sh, 1.0); }'}); };
+  var hT = etex(ENV.hedge, false, true), hm = new THREE.MeshBasicMaterial({map:hT, alphaTest:0.5, side:THREE.DoubleSide}); hT.encoding = THREE.sRGBEncoding;
+  var HW = ENV.hedgeWH[0]*2.0, HH = ENV.hedgeWH[1]*2.0, hg = new THREE.PlaneGeometry(HW, HH);
+  var hedge = function(xa, za, xb, zb){ var L = Math.hypot(xb-xa, zb-za), n = Math.ceil(L/(HW*0.8)), ang = Math.atan2(-(zb-za), xb-xa);
+    for(var i=0;i<n;i++){ var t = (i+0.5)/n; for(var o=-1;o<=1;o+=2){ var m = new THREE.Mesh(hg, hm), nx = -(zb-za)/L, nz = (xb-xa)/L;
+      m.position.set(xa+(xb-xa)*t + nx*o*0.25, GY + HH/2 - 0.05, za+(zb-za)*t + nz*o*0.25); m.rotation.y = ang; if(o>0) m.scale.x = -1; scene.add(m); } } };
+  hedge(-9,-8.5,23,-8.5); hedge(-9,-8.5,-9,22.5); hedge(23,-8.5,23,22.5); hedge(-9,22.5,4.1,22.5); hedge(6.1,22.5,23,22.5);
+  var tT = etex(ENV.tree, false, true), tm = new THREE.MeshBasicMaterial({map:tT, alphaTest:0.5, side:THREE.DoubleSide}); tT.encoding = THREE.sRGBEncoding;
+  [[-7,-6.5,1.4],[-2.5,-11.5,1.6],[15.5,-11,1.5],[20,-5,1.3],[-7.5,10,1.5],[19.5,13,1.4],[25,4,1.6],[-12.5,2,1.5]].forEach(function(p){
+    var S = ENV.treeS*p[2], g = new THREE.PlaneGeometry(S, S);
+    for(var k=0;k<2;k++){ var m = new THREE.Mesh(g, tm); m.position.set(p[0], GY + ENV.treeZ*p[2] + S/2, p[1]); m.rotation.y = k*Math.PI/2 + p[0]; scene.add(m); } });
+} else {
 (function(){ var c = cv(8,256), g = c.getContext('2d'), gr = g.createLinearGradient(0,0,0,256);
   gr.addColorStop(0,'#a9c4e2'); gr.addColorStop(0.36,'#d6e2ee'); gr.addColorStop(0.5,EDGE); gr.addColorStop(1,EDGE);
   g.fillStyle = gr; g.fillRect(0,0,8,256); var t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
   scene.add(new THREE.Mesh(new THREE.SphereGeometry(400,32,20), new THREE.MeshBasicMaterial({map:t, side:THREE.BackSide}))); })();
-var far = new THREE.Mesh(new THREE.PlaneGeometry(900,900), new THREE.MeshBasicMaterial({color:new THREE.Color(EDGE).convertSRGBToLinear()}));
-far.rotation.x = -Math.PI/2; far.position.set(6.5,GY-0.004,4.5); scene.add(far);
+far = new THREE.Mesh(new THREE.PlaneGeometry(900,900), new THREE.MeshBasicMaterial({color:new THREE.Color(EDGE).convertSRGBToLinear()}));
+far.rotation.x = -Math.PI/2; far.position.set(6.75,GY-0.004,5); scene.add(far);
+}
 function b64(s){ var b = atob(s), n = b.length, u = new Uint8Array(n); for(var i=0;i<n;i++) u[i] = b.charCodeAt(i); return u.buffer; }
 function tex(k){ var t = new THREE.Texture(), im = new Image(); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO;
   im.onload = function(){ var lim = Math.min(MAXT, HI ? 4096 : 2048), src = im;
@@ -129,7 +165,7 @@ function part(k, mat){ var d = MD[k], g = new THREE.BufferGeometry();
   g.setIndex(new THREE.BufferAttribute(new Uint32Array(b64(d.idx)),1));
   var m = new THREE.Mesh(g, mat || new THREE.MeshBasicMaterial({map:tex(k)})); m.scale.setScalar(0.002); return m; }
 var house = new THREE.Group(), roofG = new THREE.Group(), furnG = new THREE.Group(), labelG = new THREE.Group();
-house.add(part('shell'), part('floor'), part('ground'));
+house.add(part('shell'), part('floor'), window.__groundMat ? part('ground', window.__groundMat(tex('ground'))) : part('ground'));
 roofG.add(part('roof')); furnG.add(part('furn'));
 var glass = part('glass', new THREE.MeshBasicMaterial({color:new THREE.Color('#d5e8ee').convertSRGBToLinear(), transparent:true, opacity:0.16, depthWrite:false, side:THREE.DoubleSide}));
 glass.renderOrder = 2; house.add(glass);
@@ -144,23 +180,30 @@ function wall(x0,y0,x1,y1,ops){
   piece(cur,e);
 }
 wall(0,0,11000,174,[[1843,2468,1550,2200],[6345,8145,800,2200]]);
-wall(0,8326,11000,8500,[[1324,2574,800,2200],[3971,4471,800,2200],[4546,5546,0,2100]]);
-wall(0,174,174,8326,[]); wall(10826,174,11000,8326,[[1424,3224,0,2100],[5277,7077,0,2100]]);
-wall(1424,174,1519,2732,[[1053,1853,0,2100]]); wall(3569,174,3664,2828,[]); wall(174,2732,3569,2828,[[2679,3479,0,2100]]);
-wall(2494,2828,2589,4178,[]); wall(174,4178,10826,4323,[[1560,2360,0,2100],[4231,5631,0,2100]]);
-wall(3724,4323,3819,8326,[[4458,5358,0,2100]]); wall(7181,4323,7276,8326,[[5191,6091,0,2100],[6901,7701,0,2100]]);
-wall(5636,6181,7181,6276,[]); wall(5636,6276,5731,8326,[]);
+wall(0,8326,11000,8500,[[1324,2574,800,2200],[3966,4466,800,2200],[4541,5541,0,2100]]);
+wall(0,174,174,8326,[]); wall(10826,174,11000,8326,[[1424,3224,0,2100],[5276,7076,0,2100]]);
+wall(1424,174,1519,2732,[[1053,1853,0,2100]]);
+wall(174,2732,3664,2827,[[2679,3479,0,2100]]);
+wall(3569,174,3664,2732,[]);
+wall(2494,2827,2589,4177,[]);
+wall(174,4177,10826,4322,[[1560,2360,0,2100],[4231,5631,0,2100]]);
+wall(3724,4322,3814,8326,[[4457,5357,0,2100]]);
+wall(7176,4322,7271,8326,[[5190,6090,0,2100],[6900,7700,0,2100]]);
+wall(5631,6181,5721,8326,[]);
+wall(5631,6181,7176,6271,[]);
+[75,2100,4250,6400,8425].forEach(function(y){ colliders.push([13.35,(y-75)*M,13.5,(y+75)*M]); });
+[[3830,9550],[6180,9550]].forEach(function(p){ colliders.push([p[0]*M,p[1]*M,(p[0]+150)*M,(p[1]+150)*M]); });
 var ROOMS = [
-  {n:'Тех. помещение', a:'3,2',  r:[[174,174,1424,2732]]},
-  {n:'С/у',            a:'5,25', r:[[1519,174,3569,2732]]},
-  {n:'Кухня-гостиная', a:'30,12',r:[[3664,174,10826,4178],[2589,2828,3664,4178]]},
-  {n:'Гардероб',       a:'3,13', r:[[174,2828,2494,4178]]},
-  {n:'Спальня 1',      a:'14,21',r:[[174,4323,3724,8326]]},
-  {n:'Тамбур',         a:'10,15',r:[[3819,4323,7181,6181],[3819,6181,5636,8326]]},
-  {n:'Гардероб',       a:'2,97', r:[[5731,6276,7181,8326]]},
-  {n:'Спальня 2',      a:'14,21',r:[[7276,4323,10826,8326]]},
-  {n:'Терраса',        a:'21,25',r:[[11000,0,13500,8500]]},
-  {n:'Крыльцо',        a:'3',    r:[[3830,8500,6330,9700]]}
+  {n:'Тех. помещение', a:'3,2',   r:[[174,174,1424,2732]]},
+  {n:'С/у',            a:'5,25',  r:[[1519,174,3569,2732]]},
+  {n:'Гардероб',       a:'3,13',  r:[[174,2827,2494,4177]]},
+  {n:'Кухня-гостиная', a:'30,12', r:[[3664,174,10826,4177],[2589,2827,3664,4177]]},
+  {n:'Спальня 1',      a:'14,21', r:[[174,4322,3724,8326]]},
+  {n:'Тамбур',         a:'10,15', r:[[3814,4322,7176,6181],[3814,6181,5631,8326]]},
+  {n:'Гардероб',       a:'2,97',  r:[[5721,6271,7176,8326]]},
+  {n:'Спальня 2',      a:'14,21', r:[[7271,4322,10826,8326]]},
+  {n:'Терраса',        a:'21,25', r:[[11000,0,13500,8500]]},
+  {n:'Крыльцо',        a:'3',     r:[[3830,8500,6330,9700]]}
 ];
 ROOMS.forEach(function(rm){
   var q = rm.r[0], c = cv(512,176), g = c.getContext('2d');
@@ -173,15 +216,17 @@ ROOMS.forEach(function(rm){
 });
 
 /* ---------- state ---------- */
-var SIT = 0, mode = 'out', pos = {x:5.05, z:9.15}, yaw = 0, pitch = 0, floorNow = 0, labelsOn = true;
-var ORB = {out:{az:0.82, el:0.3, d:18, t:new THREE.Vector3(6.6,1.2,4.4)}, top:{az:0.55, el:0.95, d:13.5, t:new THREE.Vector3(6.4,0,4.6)}};
+var SIT = 0, mode = 'out', pos = {x:5.04, z:12.5}, yaw = 0, pitch = 0, floorNow = 0, labelsOn = true;
+var ORB = {out:{az:0.55, el:0.3, d:18, t:new THREE.Vector3(6.75,1.1,4.6)}, top:{az:0.35, el:1.0, d:14.5, t:new THREE.Vector3(6.75,0,4.6)}};
 var keys = {}, stick = {x:0,y:0};
 function hit(x,z){ for(var i=0;i<colliders.length;i++){ var c = colliders[i]; if(x>c[0]-R && x<c[2]+R && z>c[1]-R && z<c[3]+R) return true; } return false; }
 function floorY(x,z){
   if(x>-0.05 && x<13.55 && z>-0.05 && z<8.55) return 0;
   if(x>3.83 && x<6.33 && z>=8.55 && z<9.7) return 0;
-  if(x>4.08 && x<6.08 && z>=9.7 && z<10.0) return -0.2;
-  if(x>4.08 && x<6.08 && z>=10.0 && z<10.3) return -0.38;
+  if(x>3.83 && x<6.33 && z>=9.7 && z<9.85) return -0.2;
+  if(x>3.83 && x<6.33 && z>=9.85 && z<10.0) return -0.38;
+  if(x>11.5 && x<13.0 && z>=8.55 && z<8.65) return -0.2;
+  if(x>11.5 && x<13.0 && z>=8.65 && z<8.8) return -0.38;
   return GY;
 }
 function move(dx,dz){
@@ -234,7 +279,7 @@ canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel
 canvas.addEventListener('wheel', function(e){ if(mode!=='walk'){ var o = ORB[mode]; o.d = Math.max(6,Math.min(45,o.d*(1+e.deltaY*0.001))); e.preventDefault(); } }, {passive:false});
 
 /* ---------- minimap ---------- */
-var map = $('map'), mg = map.getContext('2d'), MX = -0.6, MZ = -0.6, MW = 14.7, MH = 10.9, ms = 1;
+var map = $('map'), mg = map.getContext('2d'), MX = -0.4, MZ = -0.4, MW = 14.3, MH = 10.6, ms = 1;
 function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 function drawMap(){
   var w = map.clientWidth, h = map.clientHeight, dpr = Math.min(devicePixelRatio||1,2);
@@ -317,7 +362,7 @@ vrBtn.onclick = function(){
 function resize(){ var w = innerWidth, h = innerHeight; if(renderer.xr.isPresenting) return;
   renderer.setSize(w,h,false); camera.aspect = w/h; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize);
-window.__tour = { go:function(x,z,y,p){ pos.x = x; pos.z = z; yaw = y||0; pitch = p||0; floorNow = floorY(x,z); setMode('walk'); }, mode:setMode, orbit:function(m,az,el,d){ ORB[m].az = az; ORB[m].el = el; ORB[m].d = d; setMode(m); } };
+window.__tour = { cam:camera, room:function(){ var r=roomAt(pos.x,pos.z); return r ? r.n+' · '+r.a+' м²' : ''; }, go:function(x,z,y,p){ pos.x = x; pos.z = z; yaw = y||0; pitch = p||0; floorNow = floorY(x,z); setMode('walk'); }, mode:setMode, orbit:function(m,az,el,d){ ORB[m].az = az; ORB[m].el = el; ORB[m].d = d; setMode(m); } };
 var last = performance.now(), tick = 0;
 renderer.setAnimationLoop(function(now){
   var dt = Math.min(0.05,(now-last)/1000); last = now;
