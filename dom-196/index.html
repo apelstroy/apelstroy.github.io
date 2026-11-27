@@ -84,12 +84,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <button id="vr" disabled>VR: проверка…</button>
 </div>
 
-<script src="model1.js?v=3"></script>
-<script src="model2.js?v=3"></script>
-<script src="model3.js?v=3"></script>
-<script src="three.js?v=3"></script>
-<script src="env1.js?v=3"></script>
-<script src="env2.js?v=3"></script>
+<script src="model1.js?v=4"></script>
+<script src="model2.js?v=4"></script>
+<script src="model3.js?v=4"></script>
+<script src="three.js?v=4"></script>
+<script src="env1.js?v=4"></script>
+<script src="env2.js?v=4"></script>
 
 <script>
 (function(){
@@ -183,15 +183,15 @@ function wall(x0,y0,x1,y1,ops){
   piece(cur,e);
 }
 var C1 = colliders, C2 = [];
-wall(0,0,10000,174,[[2500,4300,900,2500],[5700,7500,400,2500]]);
+wall(0,0,10000,174,[[2500,4300,400,2500],[5700,7500,400,2500]]);
 wall(0,174,174,12076,[[799,1599,0,2100],[8776,9576,900,2500]]);
 wall(9826,174,10000,10826,[[3924,5174,900,2500],[6348,7148,2500,3125]]);
-wall(2951,10826,10000,11000,[[3233,4233,0,2100]]);
+wall(2951,10826,10000,11000,[[3275,4275,0,2100]]);
 wall(2951,11000,3125,12076,[]); wall(0,12076,3125,12250,[[937,2187,900,2500]]);
 wall(2039,174,2163,2050,[[799,1599,0,2100]]);
-wall(174,2050,4913,2174,[[2788,4288,0,2400]]);
-wall(4913,174,5087,5348,[]);
-wall(174,5574,3413,5748,[]); wall(6587,5574,9826,5748,[]);
+wall(174,2050,4913,2174,[[2500,4288,0,2450]]);
+wall(4913,174,5087,5574,[]);
+wall(174,5574,9826,5748,[[3313,4313,0,2450],[5337,6337,0,2450]]);
 wall(2951,5748,3075,7748,[[6473,7273,0,2100]]);
 wall(174,7748,2951,7872,[]);
 wall(2951,7872,3075,10826,[[9148,9948,0,2100]]);
@@ -200,7 +200,7 @@ wall(4913,7748,9826,7922,[[5457,6257,0,2100],[7151,7951,0,2100]]);
 wall(4913,7922,5087,10826,[]); wall(6887,7922,7011,10826,[]);
 wall(174,10202,2174,10326,[]);
 wall(7011,9698,9826,9766,[[8000,8700,0,2050]]);                         /* sauna: glass wall of the steam room */
-colliders.push([6.7,6.723,8.7,6.773]);                                   /* middle rail of the stairs */
+colliders.push([6.672,6.723,8.895,6.773]);                                   /* middle rail of the stairs */
 [[3150,12100],[5725,12100],[7525,12100],[9775,12100]].forEach(function(p){ colliders.push([p[0]*M,p[1]*M,(p[0]+150)*M,(p[1]+150)*M]); });
 var CS = C1.slice();                                                     /* on the stairs (0.3..2.6 m): no headroom limit */
 colliders.push([8.2,6.773,9.826,7.748]);                                 /* floor 1: too low under the upper flight / landing */
@@ -216,7 +216,7 @@ wall(174,7748,4913,7872,[[1941,2841,0,2100]]);
 wall(4913,7748,9826,7872,[[5197,6097,0,2100]]);
 wall(2951,7872,3075,10826,[]);
 wall(5087,3470,5680,3570,[]); wall(7030,3470,9826,3570,[]);           /* bedroom 2 | study zone */
-colliders.push([6.676,5.748,6.724,6.773]);                               /* railing at the stair opening */
+colliders.push([6.648,5.748,6.696,6.773]);                               /* railing at the stair opening */
 colliders = C1;
 var F2 = 3.447, RS = F2/18;
 var ROOMS = [
@@ -224,7 +224,7 @@ var ROOMS = [
   {f:1, n:'Прихожая',       a:'5,2',  r:[[2163,174,4913,2050]]},
   {f:1, n:'Кухня',          a:'16,1', r:[[174,2174,4913,5574]]},
   {f:1, n:'Гостиная-столовая', a:'25,6', r:[[5087,174,9826,5574]]},
-  {f:1, n:'Холл',           a:'13,5', r:[[3075,5748,9826,7748],[3413,5574,6587,5748]]},
+  {f:1, n:'Холл',           a:'13,5', r:[[3075,5748,9826,7748]]},
   {f:1, n:'С/у',            a:'5,6',  r:[[174,5748,2951,7748]]},
   {f:1, n:'Котельная',      a:'6,5', r:[[174,7872,2951,10202],[2174,10202,2951,10326]]},
   {f:1, n:'Постирочная',    a:'4,9', r:[[174,10326,2951,12076]]},
@@ -259,10 +259,10 @@ function hit(x,z){ return hitH(x,z,gH); }
 /* stairs: 8 steps east (north half), landing at the east wall, 8 steps west (south half); 18 risers */
 function stairH(x,z,ref){
   var X = x*1000, Y = z*1000;
-  if(X<6700 || X>9826 || Y<5748 || Y>7748) return null;
-  if(X>=8700) return ref>1.0 ? 9*RS : null;
-  if(Y<6748) return Math.max(1,Math.min(8,Math.ceil((X-6700)/250)))*RS;
-  return ref>1.0 ? (9+Math.max(1,Math.min(8,Math.ceil((8700-X)/250))))*RS : null;
+  if(X<6672 || X>9826 || Y<5748 || Y>7748) return null;
+  if(X>=8895) return ref>1.0 ? 9*RS : null;
+  if(Y<6748) return Math.max(1,Math.min(9,Math.floor((X-6672)/247)+1))*RS;
+  return ref>1.0 ? Math.max(10,Math.min(18,10+Math.floor((8895-X)/247)))*RS : null;
 }
 function groundAt(x,z,ref){
   var s = stairH(x,z,ref); if(s!==null) return s;
